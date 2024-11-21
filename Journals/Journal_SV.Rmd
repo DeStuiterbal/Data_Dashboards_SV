@@ -24,6 +24,21 @@ The regions of interest files have 3 columns: chromosome, position and gene.
 
 In barcodes.csv are the types of patients given for each barcode (heathy, control, etc.).
 
+Er staat geen gene colom in de all read files, wat vervelend is voor het filteren, Ramon Reilman (medestudent) heeft hier al een mail over gestuurt, dus als hij een reactie krijgt geeft hij dat door aan mij.
+
+*Nov 21 2024*
+
+Nu wil ik de data alsnog even op mijn repo hebben onder in de map 'data'. Dus ik copieer de data naar mijn repository ook al kan er een verandering aan komen, maar dan kopieer ik het wel opnieuw.
+
+ik gebruik de code:
+```{bash eval = FALSE}
+scp user@bioinf.nl:/commons/Themas/Thema06/Methylatie/analysis ./
+scp user@bioinf.nl:/commons/Themas/Thema06/Methylatie/barcodes.csv ./
+```
+
+Als visualisatie zat ik in ieder geval te denken aan het selecteren van een of meerdere chromosomen en een range van posities voor de promoter regio's. Na die selectie zou het waarschijnlijk fijn zijn om niet alle chromosomen tegelijk te zien, dus dan zou je kunnen wisselen tussen chromosoom visualisaties met een dropdown menu of iets. De plot die dan gevisualiseert wordt zou dan waarschijnlijk een barchart zijn met op de x-as de positie en op de y-as een %gemetileert of readcounts.
+
+
 
 
 
