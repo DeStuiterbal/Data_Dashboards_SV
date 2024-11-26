@@ -3,6 +3,7 @@
 import panel
 import pandas
 import configparser
+import matplotlib
 
 
 def setup_panel():

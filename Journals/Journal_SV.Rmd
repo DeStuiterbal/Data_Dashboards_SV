@@ -38,6 +38,47 @@ scp user@bioinf.nl:/commons/Themas/Thema06/Methylatie/barcodes.csv ./
 
 Als visualisatie zat ik in ieder geval te denken aan het selecteren van een of meerdere chromosomen en een range van posities voor de promoter regio's. Na die selectie zou het waarschijnlijk fijn zijn om niet alle chromosomen tegelijk te zien, dus dan zou je kunnen wisselen tussen chromosoom visualisaties met een dropdown menu of iets. De plot die dan gevisualiseert wordt zou dan waarschijnlijk een barchart zijn met op de x-as de positie en op de y-as een %gemetileert of readcounts.
 
+*Nov 26 2024*
+
+Ik heb de bestanden met git lfs naar de git repository gepushed. Ik ga hier verder met het kijken naar de visualisatie van de bestanden:
+
+Geef mijn al gegenereerde venv met [reticulate](https://rviews.rstudio.com/2019/06/10/reticulate-virtualenv-and-python-in-linux/):
+```{r}
+library("reticulate")
+```
+
+
+```{r}
+use_virtualenv("../venv")
+py_config()
+matplotlib <- import("matplotlib")
+matplotlib$use("Agg", force = TRUE)
+```
+
+Importeer de benodigde library's:
+```{python}
+import pandas
+import matplotlib
+```
+
+data inlezen
+```{python}
+bar_11_ALL = pandas.read_csv("../Data/analysis/barcode11_methylatie_ALL.csv", sep="\t")
+print(bar_11_ALL.head(10))
+```
+
+```{python}
+bar_11_ROI = pandas.read_csv("../Data/analysis/barcode11.methylatie_ROIs.csv", sep="\t", header=0, usecols=[0,1,2], names=["chr", "pos", "gene"])
+print(bar_11_ROI.head(10))
+```
+
+Ik geef de colomen zelf op omdat bij de ROI data wordt de gene colom naam naar een NaN colom geschoven en de gene colom unnamed wordt.
+
+```{python}
+
+```
+
+
 
 
 
