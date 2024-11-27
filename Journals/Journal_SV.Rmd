@@ -57,26 +57,50 @@ matplotlib$use("Agg", force = TRUE)
 
 Importeer de benodigde library's:
 ```{python}
-import pandas
-import matplotlib
+import pandas as pd
+import matplotlib as mpl
+import numpy as np
+import os
 ```
 
 data inlezen
 ```{python}
-bar_11_ALL = pandas.read_csv("../Data/analysis/barcode11_methylatie_ALL.csv", sep="\t")
+bar_11_ALL = pd.read_csv("../Data/analysis/barcode11_methylatie_ALL.csv", sep="\t")
 print(bar_11_ALL.head(10))
 ```
 
 ```{python}
-bar_11_ROI = pandas.read_csv("../Data/analysis/barcode11.methylatie_ROIs.csv", sep="\t", header=0, usecols=[0,1,2], names=["chr", "pos", "gene"])
+bar_11_ROI = pd.read_csv("../Data/analysis/barcode11.methylatie_ROIs.csv", sep="\t", header=0, usecols=[0,1,2], names=["chr", "pos", "gene"])
 print(bar_11_ROI.head(10))
 ```
 
 Ik geef de colomen zelf op omdat bij de ROI data wordt de gene colom naam naar een NaN colom geschoven en de gene colom unnamed wordt.
 
-```{python}
+Ik kan alle ROI en ALL data waarschijnlijk in een lijst of dictionary opslaan, ik ga dit alleen doen met de ROI's omdat die heel weinig informatie hebben en ik makkelijk op mijn eigen laptop kan processen.
 
+Hiervoor wil ik de absolte paden hebben om de bestanden in te lezen. Dit kan ik doen met de config, maar ik kan met os misschien die ook zelf genereren:
+
+```{python}
+ROI_paths = [os.path.abspath(os.path.join("../Data/analysis/", path)) for path in os.listdir("../Data/analysis/") if path.endswith("ROIs.csv")]
+print(ROI_paths)
+ALL_paths = [os.path.abspath(os.path.join("../Data/analysis/", path)) for path in os.listdir("../Data/analysis/") if path.endswith("ALL.csv")]
+print(ALL_paths)
 ```
+
+Dit werkt, ik gebruik dezelfde code wel twee keer dus ik kan deze als een functie in mijn bestand zetten.
+
+Ik wil deze bestanden wel in een enkele dataframe, met een extra colom die aangeeft van welke barcode het komt. Dit is makelijker als ik deze data als dict maak met de key's de barcode:
+
+```{python}
+# index op het absolute pad met negatieve waardes zodat mogelijke afwijkingen in het pad niet relevant is voor het indexen op de string.
+ROI_data = {file[-29:-20]: (pd.read_csv(file, sep="\t", header=0, usecols=[0,1,2], names=["chr", "pos", "gene"])) for file in ROI_paths}
+
+print(ROI_data)
+```
+Om een of andere reden is barcode 12 ROI leeg, en is er een rare volgorde van de barcodes, maar dat zou niet uit moeten maken.
+
+
+
 
 
 
