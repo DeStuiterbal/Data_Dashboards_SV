@@ -49,12 +49,10 @@ library("reticulate")
 
 
 ```{r}
-use_virtualenv("../venv")
+use_virtualenv("../venv", required = T)
 py_config()
-matplotlib <- import("matplotlib")
-matplotlib$use("Agg", force = TRUE)
 ```
-
+*Nov 27 2024*
 Importeer de benodigde library's:
 ```{python}
 import pandas as pd
@@ -99,10 +97,32 @@ print(ROI_data)
 ```
 Om een of andere reden is barcode 12 ROI leeg, en is er een rare volgorde van de barcodes, maar dat zou niet uit moeten maken.
 
+*Nov 28 2024*
+
+Ik denk dat het handig is om deze dictionary naar een dataframe combineer, maar dan is het misschien wel handig om nog een colom aan te maken voor het id.
+
+*Dec 3 2024*
+```{python}
+full_ROI_data = pd.DataFrame(columns=["chr", "pos", "gene", "barcode"])
+for barcode in ROI_data:
+    barcodeX = ROI_data[barcode].copy()
+    barcodeX.insert(len(barcodeX.columns), "barcode", barcode)
+    # print(barcodeX.head)
+    full_ROI_data = pd.concat([full_ROI_data, barcodeX], join="inner", ignore_index=True, sort=False)
+    
+print(full_ROI_data.head)
+```
+Nu zijn alle barcodes in een dataframe. Deze code werkt ook allemaal op de ALL data.
 
 
+*Nov 28 2024*
+
+Ik heb nagedacht over het probleem met de genen, en ik denk dat ik heb misschien kan oplossen door een referentie sequentie te gebruiken. Als ik een referentie heb waarbij wel de genen staan naast de positie kan ik de positie van het begin van het gen nemen en dan gokken hoe lang daarvoor de promoter regio van dat gen dan zit (neem bijvoorbeeld aan dat de promoter regio binnen -1000 van het begin van het gen zit). Daarvoor heb ik de geannoteerde genen nodig van NCBI die je [hier](https://www.ncbi.nlm.nih.gov/datasets/gene/GCF_000001405.40/) kan downloaden, als je die download heb je wel een heel groot bestand.
 
 
+*Dec 3 2024*
+
+Ik heb een bestand gedownload, die is kleiner dan ik had verwacht (zo'n 8 Mb). 
 
 
 
