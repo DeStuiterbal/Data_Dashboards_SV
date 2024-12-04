@@ -1,31 +1,61 @@
 #!/home/user/PycharmProjects/Data_Dashboards_SV/venv python3
+import time
 
 import panel as pn
 import pandas as pd
+import hvplot.pandas
 import configparser
 import numpy as np
 import matplotlib
 import os
 
 
-def setup_panel(data):
-    # panel
+# ------------------- PANEL -----------------------
+
+def setup_panel(data, gene_options=0):
+    """
+
+    :param gene_options:
+    :param data:
+    :return:
+    """
+    #
     pn.extension(design="material", sizing_mode="stretch_width")
 
-    chr_select = pn.widgets.Select(name="Chr_N", )
+    gene_input = pn.widgets.TextInput(name="Gene Name:", placeholder="Type first letters here")
 
-    pos_slider_start = pn.widgets.IntSlider(name="Position_start", )
-    pos_slider_end = pn.widgets.IntSlider(name="Position_end", )
+    gene_options = list(set(data.gene_loc["Symbol"]))
 
-    return chr_select, pos_slider_start, pos_slider_end
+    gene_selector = pn.widgets.Select(name="Gene:", options=gene_options)
+
+    return gene_input, gene_selector
 
 
-def panel_vis(data, chr_select, pos_slider_start, pos_slider_end):
+def get_pro_region(data, gene):
+    """
 
-    interactive_plot = pn.bind()
+    :param data:
+    :param gene:
+    :return:
+    """
+    input_gene_info = data.gene_loc[data.gene_loc["Symbol"] == gene]
 
-# No config is used at the moment
+    promoter = [input_gene_info["Begin"].tolist()[0], input_gene_info["End"].tolist()[0]]
 
+    if input_gene_info["Orientation"][0] == "plus":
+        promoter[0] -= 1000
+    else:
+        promoter[1] += 1000
+
+    return promoter
+
+
+def visualise_panel(data, gene_input, gene_selector):
+    row = pn.Row(gene_input)
+    row.show()
+
+
+# ------------------- CONFIG -------------------------
 
 def read_config(config_loc):
     config = configparser.ConfigParser()
@@ -33,21 +63,55 @@ def read_config(config_loc):
     return config
 
 
+# ------------------- FILE PROCESSING -----------------------
+
 def get_abs_paths(loc, ext):
+    """
+
+    :param loc:
+    :param ext:
+    :return:
+    """
     return [os.path.abspath(os.path.join(loc, path)) for path in os.listdir(loc)
             if path.endswith(ext)]
 
 
 def read_roi_files(abs_files):
+    """
+
+    :param abs_files:
+    :return:
+    """
     return {file[-29:-20]: (pd.read_csv(file, sep="\t", header=0, usecols=[0, 1, 2], names=["chr", "pos", "gene"]))
             for file in abs_files}
 
 
 def read_all_files(abs_files):
+    """
+
+    :param abs_files:
+    :return:
+    """
     return {file[-29:-20]: (pd.read_csv(file, sep="\t")) for file in abs_files}
 
 
+def read_gene_location(path):
+    """
+
+    :param path
+    :return:
+    """
+    gene_loc_file = pd.read_csv(path, sep="\t",
+                                usecols=["Begin", "End", "Chromosome", "Orientation", "Symbol", "Gene ID"])
+    return gene_loc_file
+
+
 def combine_df_dict_to_df(df_dict):
+    """
+
+    :param df_dict:
+    :return:
+    """
     # define empty dataframe to concat to
     full_roi_data = pd.DataFrame(columns=["chr", "pos", "gene", "barcode"])
 
@@ -68,22 +132,24 @@ def combine_df_dict_to_df(df_dict):
 class Data:
     # cache the data using panel:
     @pn.cache
-    def __init__(self, path):
+    def __init__(self, config):
         # read the data and set it in self directory's
-        # all_paths = get_abs_paths(path, "ALL.csv")
-        roi_paths = get_abs_paths(path, "ROIs.csv")
+        # all_paths = get_abs_paths(config['LOCATIONS']['analysis'], "ALL.csv")
+        roi_paths = get_abs_paths(config['LOCATIONS']['analysis'], "ROIs.csv")
         # all_dict = read_all_files(all_paths)
         roi_dict = read_roi_files(roi_paths)
-        # self.all_data = combine_df_dict_to_df(all_dict)
-        self.roi_data = combine_df_dict_to_df(roi_dict)
+        # all_data = combine_df_dict_to_df(all_dict)
+        roi_data = combine_df_dict_to_df(roi_dict)
+        self.gene_loc = read_gene_location(config['LOCATIONS']['ncbi'])
+        self.roi_idf = roi_data.interactive()
+        # self.all_idf = all_data.interactive()
 
 
 def main():
-    # config = read_config("config.ini")
-    info = Data("Data/analysis")
-    # [chr_s, pos_ss, pos_se] = setup_panel(info)
-    # panel_vis(info, chr_s, pos_ss, pos_se)
-    print(info.roi_data)
+    config = read_config("config.ini")
+    info = Data(config)
+    [v1, v2] = setup_panel(data=info)
+    visualise_panel(info, v1, v2)
 
 
 if __name__ == "__main__":

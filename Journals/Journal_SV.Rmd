@@ -59,6 +59,7 @@ import pandas as pd
 import matplotlib as mpl
 import numpy as np
 import os
+import panel as pn
 ```
 
 data inlezen
@@ -110,9 +111,10 @@ for barcode in ROI_data:
     # print(barcodeX.head)
     full_ROI_data = pd.concat([full_ROI_data, barcodeX], join="inner", ignore_index=True, sort=False)
     
-print(full_ROI_data.head)
+print(full_ROI_data.head(10))
 ```
-Nu zijn alle barcodes in een dataframe. Deze code werkt ook allemaal op de ALL data.
+Nu zijn alle barcodes in een dataframe. Deze code werkt ook allemaal op de ALL data. 
+***NOTE: Deze code is nog wel een beetje langzaam, misschien kan dit nog worden verbeterd***
 
 
 *Nov 28 2024*
@@ -122,8 +124,48 @@ Ik heb nagedacht over het probleem met de genen, en ik denk dat ik heb misschien
 
 *Dec 3 2024*
 
-Ik heb een bestand gedownload, die is kleiner dan ik had verwacht (zo'n 8 Mb). 
+Ik heb een bestand gedownload, die is kleiner dan ik had verwacht (zo'n 8 Mb). Daarvan heb ik uiteindelijk maar een paar colommen nodig: Begin, End, Chromosome, Orientation(misschien) en Symbol/Gene ID
 
+Ik kan gelukkig met read_csv gelijk de colommen die ik niet nodig heb weglaten
+```{python}
+gene_loc_file = pd.read_csv("../Data/ncbi_dataset.tsv", sep = "\t", usecols=["Begin", "End", "Chromosome", "Orientation", "Symbol", "Gene ID"])
+print(gene_loc_file.head(10))
+```
+
+*Dec 4 2024*
+
+Vandaag wil ik beginnen met panel.
+
+Ik heb het idee om een tekst input veld te maken voor het lezen van een gen naam en op basis van de tekst die wordt getypt een dropdown te maken die alle mogelijke genen geeft. Ik kan waarschijnlijk ook iets vergelijkbaars doen met een chromosoom input.
+
+```{python}
+pn.extension()
+gene_input = pn.widgets.TextInput(name="Gene name", placeholder="text input here")
+gene_input.enter_pressed
+```
+```{python}
+
+gene_options = list(set(gene_loc_file["Symbol"]))
+
+gene_selector = pn.widgets.Select(name="Gene Select", options=)
+gene_selector
+```
+
+```{python}
+input_gene = "DDX11L1"
+
+input_gene_info = gene_loc_file[gene_loc_file["Symbol"] == input_gene]
+
+promotor = 0
+
+if input_gene_info["Orientation"] == "plus":
+    promotor = range(input_gene_info.iat[0, 0] - 1000, input_gene_info.iat[0, 1])
+else:
+    promotor = range(input_gene_info.iat[0, 0], input_gene_info.iat[0, 1] + 1000)
+    
+print(promotor)
+
+```
 
 
 
