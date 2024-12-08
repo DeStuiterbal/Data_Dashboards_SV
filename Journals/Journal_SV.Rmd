@@ -104,7 +104,7 @@ Ik denk dat het handig is om deze dictionary naar een dataframe combineer, maar 
 
 *Dec 3 2024*
 ```{python}
-full_ROI_data = pd.DataFrame(columns=["chr", "pos", "gene", "barcode"])
+full_ROI_data = pd.DataFrame(columns=ROI_data['barcode11'].columns)
 for barcode in ROI_data:
     barcodeX = ROI_data[barcode].copy()
     barcodeX.insert(len(barcodeX.columns), "barcode", barcode)
@@ -147,25 +147,86 @@ gene_input.enter_pressed
 
 gene_options = list(set(gene_loc_file["Symbol"]))
 
-gene_selector = pn.widgets.Select(name="Gene Select", options=)
+gene_selector = pn.widgets.Select(name="Gene Select", options=gene_options, value="")
 gene_selector
 ```
 
+
+De regio van de promotor genereer ik hier, er wordt rekening gehouden met de oriëntatie van het gen.
 ```{python}
-input_gene = "DDX11L1"
+input_gene = "CDK1"
 
 input_gene_info = gene_loc_file[gene_loc_file["Symbol"] == input_gene]
 
-promotor = 0
+print(input_gene_info)
 
-if input_gene_info["Orientation"] == "plus":
-    promotor = range(input_gene_info.iat[0, 0] - 1000, input_gene_info.iat[0, 1])
+promotor = [input_gene_info["Begin"].tolist()[0], input_gene_info["End"].tolist()[0]]
+
+if input_gene_info["Orientation"].to_list()[0] == "plus":
+    promotor[0] -= 1000
 else:
-    promotor = range(input_gene_info.iat[0, 0], input_gene_info.iat[0, 1] + 1000)
-    
+   promotor[1] += 1000
+
+chrom = "chr" + input_gene_info['Chromosome'].to_list()[0]
+
 print(promotor)
+print(chrom)
 
 ```
+
+Met de promotor regio kan ik dan van de data, waarmee ik op de data kan filteren. (bij de all data ga ik daar waarschijnlijk de start kolom voor gebruiken, omdat ik denk dat de end kolom is waar de data eindigt en niet waar de data is)
+
+*Dec 5 2024*
+
+```{python}
+gene_ROI = full_ROI_data[(full_ROI_data['pos'] >= promotor[0]) & (full_ROI_data['pos'] <= promotor[1]) & (full_ALL_data['chr'] == chrom)]
+print(gene_ROI)
+```
+
+De genen van de ROI die ik krijg zijn hetzelfde, ik kijk of ik iets mis van de ROI:
+
+```{python}
+print(full_ROI_data[full_ROI_data['gene'] == " CDK1"])
+```
+
+Ze hebben allebei net zoveel rijen, dit klopt. Door het ook met andere genen uit de data te proberen is het duidelijk dat bij de ROI er geen rekening is gehouden met de oriëntatie er er gewoon 1000 bp upstream van de genen gekeken.
+
+*Dec 6 2024*
+
+Ik run dezelfde code voor de all data: 
+```{python eval = FALSE}
+# -28:-19 ipv -29:20 want de namen zijn ROIs en ALL.
+ALL_data = {file[-28:-19]: (pd.read_csv(file, sep="\t")) for file in ALL_paths}
+
+print(ALL_data)
+```
+
+```{python eval = FALSE}
+full_ALL_data = pd.DataFrame(columns=ALL_data['barcode11'].columns)
+for barcode in ALL_data:
+    barcodeX = ALL_data[barcode].copy()
+    barcodeX.insert(len(barcodeX.columns), "barcode", barcode)
+    full_ALL_data = pd.concat([full_ALL_data, barcodeX], join="inner", ignore_index=True, sort=False)
+    
+print(full_ALL_data.head(10))
+```
+
+```{python eval = FALSE}
+gene_ALL = full_ALL_data[(full_ALL_data['start'] >= promotor[0]) & (full_ALL_data['start'] <= promotor[1]) & (full_ALL_data['chr'] == chrom)]
+print(gene_ALL)
+```
+
+door dit te proberen op de ALL data heb ik een paar kleine dingen kunnen verbeteren, bijvoorbeeld de full_---_data dynamish aamaken en zien dat het handig is om ook op het chromosoom te filteren.
+
+
+Deze link nog goed doorlezen voor afhankelijkheden van widets: https://discourse.holoviz.org/t/set-value-of-listselector-depending-on-other-listselector-value/2919/3
+
+
+```{python}
+print(sum(gene_ALL['valid'].to_list()))
+```
+
+
 
 
 
