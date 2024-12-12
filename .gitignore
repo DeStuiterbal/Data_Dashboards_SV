@@ -2,3 +2,4 @@ venv
 .idea
 Journals/.Rhistory
 .gitattributes
+Python_code/__pycache__
