@@ -1,4 +1,5 @@
 import pandas as pd
+import hvplot.pandas
 import os
 import panel as pn
 
@@ -80,7 +81,7 @@ class Data:
 
     def __str__(self):
         return """
-        
+        data reading class
         """
 
 

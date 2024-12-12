@@ -56,7 +56,7 @@ py_config()
 Importeer de benodigde library's:
 ```{python}
 import pandas as pd
-import matplotlib as mpl
+import matplotlib.pyplot as plt
 import numpy as np
 import os
 import panel as pn
@@ -202,7 +202,9 @@ print(ALL_data)
 ```
 
 ```{python eval = FALSE}
-full_ALL_data = pd.DataFrame(columns=ALL_data['barcode11'].columns)
+
+full_ALL_data = pd.DataFrame(columns=["chr", "start", "end", "frac", "valid", "barcode"])
+
 for barcode in ALL_data:
     barcodeX = ALL_data[barcode].copy()
     barcodeX.insert(len(barcodeX.columns), "barcode", barcode)
@@ -221,9 +223,52 @@ door dit te proberen op de ALL data heb ik een paar kleine dingen kunnen verbete
 
 Deze link nog goed doorlezen voor afhankelijkheden van widets: https://discourse.holoviz.org/t/set-value-of-listselector-depending-on-other-listselector-value/2919/3
 
+*Dec 10 2024*
+
+```{r eval=FALSE}
+py_save_object(py$gene_ALL, "CDK1_selected")
+```
+
+```{r}
+rm(list = ls())
+```
+
+```{r}
+py$gene_ALL <- py_load_object("CDK1_selected")
+```
 
 ```{python}
-print(sum(gene_ALL['valid'].to_list()))
+print(gene_ALL)
+```
+
+ik begin nu ook met het beter maken van mijn panel code. Ik doe dit op basis van deze [link](https://panel.holoviz.org/tutorials/intermediate/interactivity.html) (Making the class-based approach efficient).
+
+
+
+*Dec 11 2024*
+
+aantal metylatiepunten voor elke barcode
+```{python}
+unique_barcode = list(set(gene_ALL["barcode"]))
+counts = []
+for barcode in unique_barcode:
+    counts.append(gene_ALL["barcode"].to_list().count(barcode))
+
+plt.bar(unique_barcode, counts)
+plt.show()
+```
+
+
+```{python}
+bar = gene_ALL
+
+ranges = range(1, (len(bar.index)+1))
+
+sort_bar = bar.sort_values(by="start")
+
+plt.scatter(sort_bar["start"], sort_bar["valid"], c=sort_bar["frac"], cmap="Wistia")
+plt.tick_params(labelbottom=False, bottom=False)
+plt.show()
 ```
 
 
