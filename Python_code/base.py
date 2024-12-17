@@ -12,6 +12,11 @@ from viewing import View
 
 
 def read_config(config_loc):
+    """
+    Parses the config file
+    :param config_loc: relative path to the config.ini file
+    :return: parsed config file
+    """
     config = configparser.ConfigParser()
     config.read(config_loc)
     return config
@@ -20,7 +25,7 @@ def read_config(config_loc):
 def main():
     config = read_config("config.ini")
     info = Data(config)
-    View(data=info.roi_data, genes=info.gene_loc).show()
+    View(data=info.all_data, genes=info.gene_loc).show()
 
 
 if __name__ == "__main__":
