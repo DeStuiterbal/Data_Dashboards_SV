@@ -1,9 +1,8 @@
 import matplotlib.pyplot as plt
 import panel as pn
-from panel.viewable import Viewer
+from panel.viewable import Viewer, Viewable
 import param
 import pandas as pd
-import matplotlib
 
 
 class View(Viewer):
@@ -14,12 +13,16 @@ class View(Viewer):
 
     gene_input = param.String(default="")
 
+    # set default to empty string because values are determined by other input values
+    gene_name = param.ObjectSelector(objects=[None], allow_None=True)
+
     # define input for all the chromosomes
     chromosome = param.ListSelector(objects=["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13",
                                              "14", "15", "16", "17", "18", "19", "20", "21", "22", "X", "Y"])
 
-    # set default to empty string because values are determined by other input values
-    gene_name = param.ObjectSelector(objects=[None], allow_None=True)
+    # define range on chromosome
+    chrom_range_down = pn.widgets.IntInput(value=0, start=0, name="start chromosome region")
+    chrom_range_up = pn.widgets.IntInput(value=0, start=0, name="end chromosome region")
 
     def __init__(self, **params):
         super().__init__(**params)
@@ -28,18 +31,18 @@ class View(Viewer):
 
         self.gene_selectables = list(set(self.genes["Symbol"]))
 
-        # promoter, chrom = self.get_pro_region(self.gene_input.value)
+        # set chrom bounds
+        chrom_bound_up = max(self.data["end"] + 5)
+        self.chrom_range_down.end = chrom_bound_up
+        self.chrom_range_up.end = chrom_bound_up
 
-        # self.all_pipeline = self.data.all_idf[
-        #     (self.data.all_idf["pos"] in range(promoter[0], promoter[1])) &
-        #     (self.data.all_idf["chr"] == self.Chromosome.value)
-        # ]
-        # self.roi_pipeline = self.data.roi_idf[
-        #     (self.data.roi_idf["pos"] in range(promoter[0], promoter[1])) &
-        #     (self.data.roi_idf["chr"] == self.Chromosome.value)
+        # self.all_pipeline = self.data.idf[
+        #     (self.data['start'] >= self.chrom_range_down.value) &
+        #     (self.data['end'] <= self.chrom_range_up.value) &
+        #     (self.data['chr'].isin(["chr" + chrom for chrom in self.chromosome]))
         # ]
 
-    @param.depends("gene_name", "genes")
+    @param.depends("gene_name", "genes", "chromosome", "chrom_range_down", "chrom_range_up")
     def get_pro_region(self):
         """
 
@@ -57,20 +60,20 @@ class View(Viewer):
             promoter[1] += 1000
 
         # get the chromosome of the gene
-        chrom = input_gene_info['Chromosome'].tolist()[0]
+        self.chromosome = input_gene_info['Chromosome'].tolist()
 
-        return promoter, chrom
+        self.chrom_range_down.value = promoter[0]
+        self.chrom_range_up.value = promoter[1]
 
-    @param.depends("data")
-    def filter_on_pro(self, promoter, chrom):
+    @param.depends("data", "chromosome", "chrom_range_down", "chrom_range_up")
+    def filter_on_pro(self):
         """
 
-        :param chrom:
-        :param promoter:
         :return:
         """
-        return self.data[(self.data['start'] >= promoter[0]) & (self.data['end'] <= promoter[1]) &
-                         (self.data['chr'] == "chr" + chrom)]
+        return self.data[(self.data['start'] >= self.chrom_range_down.value) &
+                         (self.data['end'] <= self.chrom_range_up.value) &
+                         (self.data['chr'].isin(["chr" + chrom for chrom in self.chromosome]))]
 
     @param.depends("genes", "gene_input")
     def filter_by_gene_input(self):
@@ -98,33 +101,53 @@ class View(Viewer):
         if len(self.gene_selectables) > 1000:
             self.param.gene_name.objects = [None]
         else:
+            self.gene_selectables.sort()
             self.param.gene_name.objects = [None] + self.gene_selectables
 
     @param.depends("data", "gene_name")
     def update_data(self):
-        if self.gene_name is None:
-            return None
-        else:
-            [promoter, chrom] = self.get_pro_region()
-            df = self.filter_on_pro(promoter, chrom)
-            return df
+        if self.gene_name is not None:
+            self.get_pro_region()
+            return self.filter_on_pro()
+        elif self.chromosome & (self.chrom_range_down.value - self.chrom_range_up.value) > 1000:
+            return self.filter_on_pro()
+        return None
 
-    @param.depends("data", "genes", "chromosome", "gene_name", "gene_input")
+    @staticmethod
+    def create_barcode_counts(df, all_barcode):
+        counts = []
+        for barcode in all_barcode:
+            counts.append(df["barcode"].to_list().count(barcode))
+
+        fig, ax = plt.subplots(figsize=(4, 3))
+        ax.bar(all_barcode, counts)
+        ax.set(title="Barcode Counts")
+
+        plt.setp(ax.get_xticklabels(), rotation=15, horizontalalignment='center', fontsize='x-small')
+
+        return fig
+
+    @param.depends("data", "chrom_range_down", "chrom_range_up")
     def show_coords(self):
         df = self.update_data()
-        if df is None:
-            return df
-        else:
+        if df is not None:
+            x_range = range(self.chrom_range_down.value, self.chrom_range_up.value)
+            all_barcode = list(set(df["barcode"]))
+            all_barcode.sort()
 
-            return
+            barcode_bar = self.create_barcode_counts(df, all_barcode)
 
-    @param.depends("gene_input", "chromosome", "gene_name")
-    def __panel__(self):
+            return barcode_bar
+
+    @param.depends("gene_input", "chromosome", "gene_name", "chrom_range_down", "chrom_range_up")
+    def __panel__(self) -> Viewable:
         self.set_options()
-        self.update_data()
+        bar = self.show_coords()
         return pn.Column(pn.Row((pn.widgets.MultiChoice.from_param(self.param.chromosome))),
+                         pn.Row(self.chrom_range_down, self.chrom_range_up),
                          pn.Row(pn.widgets.TextInput.from_param(self.param.gene_input),
-                                pn.widgets.Select.from_param(self.param.gene_name)))
+                                pn.widgets.Select.from_param(self.param.gene_name)),
+                         pn.Row(pn.pane.Matplotlib(bar)))
 
     def __str__(self):
         return """

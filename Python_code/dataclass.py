@@ -14,8 +14,8 @@ class Data:
         # read the data and set it in self directory's
         all_paths = Data.get_abs_paths(config['LOCATIONS']['analysis'], "ALL.csv")
         all_dict = Data.read_all_files(all_paths)
-        # self.all_data = Data.combine_df_dict_to_df(all_dict)
-        self.all_data = all_dict["barcode13"]
+        self.all_data = Data.combine_df_dict_to_df(all_dict)
+        # self.all_data = all_dict["barcode13"]
         self.gene_loc = Data.read_gene_location(config['LOCATIONS']['ncbi'])
 
     @staticmethod
@@ -85,7 +85,7 @@ class Data:
 
     def __str__(self):
         return """
-        data reading class
+        Read data on basis of config file and put (relevant) data in a singular pandas dataframe.
         """
 
 
