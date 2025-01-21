@@ -49,7 +49,7 @@ library("reticulate")
 
 
 ```{r}
-use_virtualenv("../venv", required = T)
+use_virtualenv("/home/user/PycharmProjects/Data_Dashboards_SV/venv/", required = TRUE)
 py_config()
 ```
 *Nov 27 2024*
@@ -60,6 +60,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 import panel as pn
+import seaborn as sns
 ```
 
 data inlezen
@@ -246,6 +247,7 @@ ik begin nu ook met het beter maken van mijn panel code. Ik doe dit op basis van
 
 
 *Dec 11 2024*
+Elke rij van de data is een punt waar is gemethyleert, met de frac en valid colommen statistiche waarden zijn die aangeven hoe zeker het is dat daar daadwerkelijk is gemethyleert.
 
 aantal metylatiepunten voor elke barcode
 ```{python}
@@ -270,6 +272,30 @@ plt.scatter(sort_bar["start"], sort_bar["valid"], c=sort_bar["frac"], cmap="Wist
 plt.tick_params(labelbottom=False, bottom=False)
 plt.show()
 ```
+
+*Dec 17 2024*
+
+Ik heb nu de meeste functies duidelijker gemaakt met comments en docstrings, ik ben ook begonnen met de README. Als voorbeelddata ben ik nu afgestapt van de ROI data, omdat die start end colommen niet hebben en het is vervelend om die te veranderen. Als voorbeelddata gebruik ik nu alleen Barcode 13.
+
+Ik heb nu ook het idee voor visualisatie, dat je(gebruiker) zelf de range kan aanpassen wat je ziet. Dit zou werken als je specifiek wil kijken of ergens een methylatiepunt zit.
+
+*Dec 18 2024*
+
+Er is nu een range widget, zodat je eigenlijk twee manieren hebt om teen visualisatie te krijgen, het chromosoom en de range op dat chromosoom opgeven of een gen opgeven en dan wordt de range en het chromosoom automatisch ingevuld.
+
+```{python}
+#density = gene_ALL
+#density = density.filter(["start", "barcode"])
+
+sns.kdeplot(data=gene_ALL, x="start", hue="barcode")
+plt.show()
+```
+
+```{python}
+print(list(set(gene_ALL["barcode"])))
+```
+
+
 
 
 
