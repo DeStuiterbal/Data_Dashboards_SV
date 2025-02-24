@@ -5,3 +5,5 @@ hvplot
 panel
 configparser
 param
+pytest
+plotly
